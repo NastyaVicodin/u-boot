@@ -69,6 +69,31 @@ config CC_COVERAGE
 	  Enabling this option will pass "--coverage" to gcc to compile
 	  and link code instrumented for coverage analysis.
 
+config XEN
+	bool "Select U-Boot be run as a bootloader for XEN Virtual Machine"
+	help
+	  Enabling this option will make U-Boot be run as a bootloader
+	  for XEN [1] Virtual Machine.
+
+	  Having a unified bootloader in initial privileged domain (Domain-0)
+	  allows resolving this:
+		1. U-boot boot scripts, which are stored on the guest’s virtual disk,
+	  are guest specific, so any change in the guest’s configuration can be
+	  handled by the guest itself.
+		2. Guest OS’ kernel can be updated if OS’ needs that without any help
+	  from Domain-0.
+		3. Using the Device Tree Overlay mechanism it is possible to customize
+	  the device tree entries yet at bootloader stage inside the guest itself,
+	  so the base device tree provided by Xen can be customized.
+
+	  Xen support for U-boot was implemented by introducing a new Xen guest
+	  ARM64 board and porting essential drivers from MiniOS [2] as well as
+	  some of the work previously done by NXP [3].
+
+	  [1] - https://xenproject.org/
+	  [2] - https://wiki.xenproject.org/wiki/Mini-OS
+	  [3] - https://source.codeaurora.org/external/imx/uboot-imx/tree/?h=imx_v2018.03_4.14.98_2.0.0_ga
+
 config DISTRO_DEFAULTS
 	bool "Select defaults suitable for booting general purpose Linux distributions"
 	select AUTO_COMPLETE
