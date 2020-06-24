@@ -6,5 +6,6 @@
 #define __XEN_H__
 
 void xen_init(void);
+void xen_fini(void);
 
 #endif /* __XEN_H__ */
