@@ -56,7 +56,9 @@
 #include <timer.h>
 #include <trace.h>
 #include <watchdog.h>
+#ifdef CONFIG_XEN
 #include <xen.h>
+#endif
 #ifdef CONFIG_ADDR_MAP
 #include <asm/mmu.h>
 #endif

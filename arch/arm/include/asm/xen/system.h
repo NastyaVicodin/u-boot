@@ -1,5 +1,4 @@
-/*
- * SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
  * (C) 2014 Karim Allah Ahmed <karim.allah.ahmed@gmail.com>
  * (C) 2020, EPAM Systems Inc.
@@ -69,28 +68,17 @@ static inline int synch_test_bit(int nr, const void *addr)
 #define xchg(ptr, v)	__atomic_exchange_n(ptr, v, __ATOMIC_SEQ_CST)
 #define xchg(ptr, v)	__atomic_exchange_n(ptr, v, __ATOMIC_SEQ_CST)
 
-#define mb()		dsb()
 #define rmb()		dsb()
 #define wmb()		dsb()
-#define __iormb()	dmb()
-#define __iowmb()	dmb()
 #define xen_mb()	mb()
 #define xen_rmb()	rmb()
 #define xen_wmb()	wmb()
 
 #define smp_processor_id()	0
 
-#define to_phys(x)		((unsigned long)(x))
-#define to_virt(x)		((void *)(x))
-
 #define PFN_UP(x)		(unsigned long)(((x) + PAGE_SIZE - 1) >> PAGE_SHIFT)
 #define PFN_DOWN(x)		(unsigned long)((x) >> PAGE_SHIFT)
 #define PFN_PHYS(x)		((unsigned long)(x) << PAGE_SHIFT)
 #define PHYS_PFN(x)		(unsigned long)((x) >> PAGE_SHIFT)
-
-#define virt_to_pfn(_virt)	(PFN_DOWN(to_phys(_virt)))
-#define virt_to_mfn(_virt)	(PFN_DOWN(to_phys(_virt)))
-#define mfn_to_virt(_mfn)	(to_virt(PFN_PHYS(_mfn)))
-#define pfn_to_virt(_pfn)	(to_virt(PFN_PHYS(_pfn)))
 
 #endif

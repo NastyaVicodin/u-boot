@@ -1,4 +1,5 @@
-/******************************************************************************
+/* SPDX-License-Identifier: GPL-2.0+
+ *
  * hypervisor.c
  *
  * Communication to/from hypervisor.
@@ -51,7 +52,6 @@ int in_callback;
  */
 struct shared_info *HYPERVISOR_shared_info;
 
-#ifndef CONFIG_PARAVIRT
 static const char *param_name(int op)
 {
 #define PARAM(x)[HVM_PARAM_##x] = #x
@@ -61,11 +61,6 @@ static const char *param_name(int op)
 		PARAM(STORE_EVTCHN),
 		PARAM(PAE_ENABLED),
 		PARAM(IOREQ_PFN),
-		PARAM(TIMER_MODE),
-		PARAM(HPET_ENABLED),
-		PARAM(IDENT_PT),
-		PARAM(ACPI_S_STATE),
-		PARAM(VM86_TSS),
 		PARAM(VPT_ALIGN),
 		PARAM(CONSOLE_PFN),
 		PARAM(CONSOLE_EVTCHN),
@@ -81,11 +76,26 @@ static const char *param_name(int op)
 	return names[op];
 }
 
+/*
+ * Per the 2 ABI (see include/public/arch-arm.h) all the buffers
+ * must reside in memory which is mapped as Normal Inner Write-Back
+ * Inner-Shareable.
+ * Here non-cacheable memory is passed, so the behavior is expected.
+ *
+ * Example of usage:
+ * Before MMU setup, we work with the cache turned off, but Xen
+ * thinks that the cache turned on.
+ * Thus, we write in memory, but Xen can not see these records,
+ * because Xen read from the cache, not from the memory.
+ * So, we have to maintain the cache manually until the MMU setup.
+ */
 int hvm_get_parameter_maintain_dcache(int idx, uint64_t *value)
 {
 	struct xen_hvm_param xhv;
 	int ret;
 
+	invalidate_dcache_range((unsigned long)&xhv,
+				(unsigned long)&xhv + sizeof(xhv));
 	xhv.domid = DOMID_SELF;
 	xhv.index = idx;
 	invalidate_dcache_range((unsigned long)&xhv,
@@ -122,54 +132,24 @@ int hvm_get_parameter(int idx, uint64_t *value)
 	return ret;
 }
 
-int hvm_set_parameter(int idx, uint64_t value)
-{
-	struct xen_hvm_param xhv;
-	int ret;
-
-	xhv.domid = DOMID_SELF;
-	xhv.index = idx;
-	xhv.value = value;
-	ret = HYPERVISOR_hvm_op(HVMOP_set_param, &xhv);
-
-	if (ret < 0) {
-		pr_err("Cannot get hvm parameter %s (%d): %d!\n",
-			   param_name(idx), idx, ret);
-		BUG();
-	}
-
-	return ret;
-}
-
 struct shared_info *map_shared_info(void *p)
 {
 	struct xen_add_to_physmap xatp;
 
 	HYPERVISOR_shared_info = (struct shared_info *)memalign(PAGE_SIZE,
 								PAGE_SIZE);
-	if (HYPERVISOR_shared_info == NULL)
+	if (!HYPERVISOR_shared_info)
 		BUG();
 
 	xatp.domid = DOMID_SELF;
 	xatp.idx = 0;
 	xatp.space = XENMAPSPACE_shared_info;
-	xatp.gpfn = virt_to_pfn(HYPERVISOR_shared_info);
+	xatp.gpfn = virt_to_phys(HYPERVISOR_shared_info);
 	if (HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xatp) != 0)
 		BUG();
 
 	return HYPERVISOR_shared_info;
 }
-
-void unmap_shared_info(void)
-{
-	struct xen_remove_from_physmap xrtp;
-
-	xrtp.domid = DOMID_SELF;
-	xrtp.gpfn = virt_to_pfn(HYPERVISOR_shared_info);
-	if (HYPERVISOR_memory_op(XENMEM_remove_from_physmap, &xrtp) != 0)
-		BUG();
-}
-#endif
 
 void do_hypervisor_callback(struct pt_regs *regs)
 {
@@ -236,6 +216,7 @@ void force_evtchn_callback(void)
 void mask_evtchn(uint32_t port)
 {
 	struct shared_info *s = HYPERVISOR_shared_info;
+
 	synch_set_bit(port, &s->evtchn_mask[0]);
 }
 
@@ -247,8 +228,8 @@ void unmask_evtchn(uint32_t port)
 	synch_clear_bit(port, &s->evtchn_mask[0]);
 
 	/*
-	 * The following is basically the equivalent of 'hw_resend_irq'. Just like
-	 * a real IO-APIC we 'lose the interrupt edge' if the channel is masked.
+	 * Just like a real IO-APIC we 'lose the interrupt edge' if the
+	 * channel is masked.
 	 */
 	if (synch_test_bit(port, &s->evtchn_pending[0]) &&
 	    !synch_test_and_set_bit(port / (sizeof(unsigned long) * 8),

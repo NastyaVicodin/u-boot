@@ -1,5 +1,4 @@
-/*
- * SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0
  *
  * Simple wrappers around HVM functions
  *
@@ -18,10 +17,8 @@ extern struct shared_info *HYPERVISOR_shared_info;
 
 int hvm_get_parameter(int idx, uint64_t *value);
 int hvm_get_parameter_maintain_dcache(int idx, uint64_t *value);
-int hvm_set_parameter(int idx, uint64_t value);
 
 struct shared_info *map_shared_info(void *p);
-void unmap_shared_info(void);
 void do_hypervisor_callback(struct pt_regs *regs);
 void mask_evtchn(uint32_t port);
 void unmask_evtchn(uint32_t port);
