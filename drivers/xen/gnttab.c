@@ -80,19 +80,6 @@ grant_ref_t gnttab_grant_access(domid_t domid, unsigned long frame, int readonly
 	return ref;
 }
 
-grant_ref_t gnttab_grant_transfer(domid_t domid, unsigned long pfn)
-{
-	grant_ref_t ref;
-
-	ref = get_free_entry();
-	gnttab_table[ref].frame = pfn;
-	gnttab_table[ref].domid = domid;
-	wmb();
-	gnttab_table[ref].flags = GTF_accept_transfer;
-
-	return ref;
-}
-
 int gnttab_end_access(grant_ref_t ref)
 {
 	u16 flags, nflags;
@@ -112,41 +99,13 @@ int gnttab_end_access(grant_ref_t ref)
 	return 1;
 }
 
-unsigned long gnttab_end_transfer(grant_ref_t ref)
-{
-	unsigned long frame;
-	u16 flags;
-
-	BUG_ON(ref >= NR_GRANT_ENTRIES || ref < NR_RESERVED_ENTRIES);
-
-	while (!((flags = gnttab_table[ref].flags) & GTF_transfer_committed)) {
-		if (synch_cmpxchg(&gnttab_table[ref].flags, flags, 0) == flags) {
-			printf("Release unused transfer grant.\n");
-			put_free_entry(ref);
-			return 0;
-		}
-	}
-
-	/* If a transfer is in progress then wait until it is completed. */
-	while (!(flags & GTF_transfer_completed))
-		flags = gnttab_table[ref].flags;
-
-	/* Read the frame number /after/ reading completion status. */
-	rmb();
-	frame = gnttab_table[ref].frame;
-
-	put_free_entry(ref);
-
-	return frame;
-}
-
 grant_ref_t gnttab_alloc_and_grant(void **map)
 {
 	unsigned long mfn;
 	grant_ref_t gref;
 
 	*map = (void *)memalign(PAGE_SIZE, PAGE_SIZE);
-	mfn = virt_to_mfn(*map);
+	mfn = virt_to_phys(*map);
 	gref = gnttab_grant_access(0, mfn, 0);
 	return gref;
 }
@@ -219,12 +178,6 @@ void init_gnttab(void)
 	setup.dom = DOMID_SELF;
 	setup.nr_frames = NR_GRANT_FRAMES;
 	set_xen_guest_handle(setup.frame_list, frames);
-	rc = HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1);
-	if (rc || setup.status) {
-		printf("GNTTABOP_setup_table failed; status = %s\n",
-		       gnttabop_error(setup.status));
-		BUG();
-	}
 }
 
 void fini_gnttab(void)
@@ -247,12 +200,5 @@ void fini_gnttab(void)
 
 	setup.dom = DOMID_SELF;
 	setup.nr_frames = 0;
-
-	HYPERVISOR_grant_table_op(GNTTABOP_setup_table, &setup, 1);
-	if (setup.status) {
-		printf("GNTTABOP_setup_table failed; status = %s\n",
-		       gnttabop_error(setup.status));
-		BUG();
-	}
 }
 
