@@ -462,7 +462,7 @@ static void blkfront_aio(struct blkfront_aiocb *aiocbp, int write)
 			barrier();
 		}
 		req->seg[j].gref = gnttab_grant_access(dev->dom,
-						       virt_to_pfn((void *)data),
+						       virt_to_phys((void *)data),
 						       write);
 		aiocbp->gref[j] = req->seg[j].gref;
 	}
