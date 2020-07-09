@@ -1,20 +1,17 @@
-/* -*-  Mode:C; c-basic-offset:4; tab-width:4 -*-
- ****************************************************************************
+/* SPDX-License-Identifier: GPL-2.0+
+ *
  * (C) 2003 - Rolf Neugebauer - Intel Research Cambridge
  * (C) 2005 - Grzegorz Milos - Intel Research Cambridge
  * (C) 2020 - EPAM Systems Inc.
- ****************************************************************************
  *
- *		File: events.c
- *	  Author: Rolf Neugebauer (neugebar@dcs.gla.ac.uk)
- *	 Changes: Grzegorz Milos (gm281@cam.ac.uk)
+ * File: events.c
+ * Author: Rolf Neugebauer (neugebar@dcs.gla.ac.uk)
+ * Changes: Grzegorz Milos (gm281@cam.ac.uk)
  *
- *		Date: Jul 2003, changes Jun 2005
+ * Date: Jul 2003, changes Jun 2005
  *
  * Environment: Xen Minimal OS
  * Description: Deals with events received on event channels
- *
- ****************************************************************************
  */
 #include <common.h>
 #include <log.h>
@@ -28,17 +25,18 @@
 #define NR_EVS 1024
 
 /* this represents a event handler. Chaining or sharing is not allowed */
-typedef struct _ev_action_t {
-	evtchn_handler_t handler;
+struct _ev_action {
+	void (*handler)(evtchn_port_t port, struct pt_regs *regs, void *data);
 	void *data;
 	u32 count;
-} ev_action_t;
+};
 
-static ev_action_t ev_actions[NR_EVS];
+static struct _ev_action ev_actions[NR_EVS];
 void default_handler(evtchn_port_t port, struct pt_regs *regs, void *data);
 
 static unsigned long bound_ports[NR_EVS / (8 * sizeof(unsigned long))];
 
+/* Unbind all event channels */
 void unbind_all_ports(void)
 {
 	int i;
@@ -61,7 +59,7 @@ void unbind_all_ports(void)
  */
 int do_event(evtchn_port_t port, struct pt_regs *regs)
 {
-	ev_action_t  *action;
+	struct _ev_action	*action;
 
 	clear_evtchn(port);
 
@@ -79,7 +77,8 @@ int do_event(evtchn_port_t port, struct pt_regs *regs)
 	return 1;
 }
 
-evtchn_port_t bind_evtchn(evtchn_port_t port, evtchn_handler_t handler,
+evtchn_port_t bind_evtchn(evtchn_port_t port,
+			  void (*handler)(evtchn_port_t, struct pt_regs *, void *),
 			  void *data)
 {
 	if (ev_actions[port].handler != default_handler)
@@ -94,6 +93,7 @@ evtchn_port_t bind_evtchn(evtchn_port_t port, evtchn_handler_t handler,
 	return port;
 }
 
+/* Unbind event channel for selected port */
 void unbind_evtchn(evtchn_port_t port)
 {
 	struct evtchn_close close;
@@ -128,7 +128,8 @@ void default_handler(evtchn_port_t port, struct pt_regs *regs, void *ignore)
  * as Xen is concerned, but we automatically bind a handler to it
  * from inside mini-os.
  */
-int evtchn_alloc_unbound(domid_t pal, evtchn_handler_t handler,
+int evtchn_alloc_unbound(domid_t pal,
+			 void (*handler)(evtchn_port_t, struct pt_regs *, void *),
 			 void *data, evtchn_port_t *port)
 {
 	int rc;
@@ -140,7 +141,7 @@ int evtchn_alloc_unbound(domid_t pal, evtchn_handler_t handler,
 	rc = HYPERVISOR_event_channel_op(EVTCHNOP_alloc_unbound, &op);
 	if (rc) {
 		printf("ERROR: alloc_unbound failed with rc=%d", rc);
-		       return rc;
+		return rc;
 	}
 	if (!handler)
 		handler = default_handler;
@@ -148,6 +149,7 @@ int evtchn_alloc_unbound(domid_t pal, evtchn_handler_t handler,
 	return rc;
 }
 
+/* Distribution of events by appropriate handlers */
 void eventchn_poll(void)
 {
 	do_hypervisor_callback(NULL);
@@ -168,6 +170,7 @@ void init_events(void)
 	}
 }
 
+/* Unbind all event channels */
 void fini_events(void)
 {
 	debug("%s\n", __func__);
