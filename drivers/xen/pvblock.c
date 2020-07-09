@@ -110,7 +110,7 @@ static int init_blkfront(unsigned int devid, struct blkfront_dev *dev)
 	SHARED_RING_INIT(s);
 	FRONT_RING_INIT(&dev->ring, s, PAGE_SIZE);
 
-	dev->ring_ref = gnttab_grant_access(dev->dom, virt_to_pfn(s), 0);
+	dev->ring_ref = gnttab_grant_access(dev->dom, virt_to_phys(s), 0);
 
 again:
 	err = xenbus_transaction_start(&xbt);
