@@ -81,4 +81,8 @@ static inline int synch_test_bit(int nr, const void *addr)
 #define PFN_PHYS(x)		((unsigned long)(x) << PAGE_SHIFT)
 #define PHYS_PFN(x)		(unsigned long)((x) >> PAGE_SHIFT)
 
+#define to_phys(x)		((unsigned long)(x))
+#define to_virt(x)		((void *)(x))
+#define virt_to_pfn(_virt)	(PFN_DOWN(to_phys(_virt)))
+
 #endif

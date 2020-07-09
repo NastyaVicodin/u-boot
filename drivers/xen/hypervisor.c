@@ -147,7 +147,7 @@ struct shared_info *map_shared_info(void *p)
 	xatp.domid = DOMID_SELF;
 	xatp.idx = 0;
 	xatp.space = XENMAPSPACE_shared_info;
-	xatp.gpfn = virt_to_phys(HYPERVISOR_shared_info);
+	xatp.gpfn = virt_to_pfn(HYPERVISOR_shared_info);
 	if (HYPERVISOR_memory_op(XENMEM_add_to_physmap, &xatp) != 0)
 		BUG();
 
