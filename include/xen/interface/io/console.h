@@ -1,4 +1,5 @@
-/******************************************************************************
+/* SPDX-License-Identifier: GPL-2.0
+ *
  * console.h
  *
  * Console I/O interface for Xen guest OSes.

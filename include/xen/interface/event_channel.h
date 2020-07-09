@@ -190,8 +190,6 @@ struct evtchn_reset {
 	domid_t dom;
 };
 
-typedef struct evtchn_reset evtchn_reset_t;
-
 /*
  * EVTCHNOP_init_control: initialize the control block for the FIFO ABI.
  */

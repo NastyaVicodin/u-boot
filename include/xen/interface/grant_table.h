@@ -1,4 +1,5 @@
-/******************************************************************************
+/* SPDX-License-Identifier: GPL-2.0
+ *
  * grant_table.h
  *
  * Interface for granting foreign access to page frames, and receiving

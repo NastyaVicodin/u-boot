@@ -1,4 +1,5 @@
-/******************************************************************************
+/* SPDX-License-Identifier: GPL-2.0
+ *
  * protocols.h
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

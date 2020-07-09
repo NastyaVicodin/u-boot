@@ -1,4 +1,6 @@
 /*
+ * SPDX-License-Identifier: GPL-2.0
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to
  * deal in the Software without restriction, including without limitation the
@@ -43,8 +45,7 @@ struct xen_hvm_pagetable_dying {
 	aligned_u64 gpa;
 };
 
-typedef struct xen_hvm_pagetable_dying xen_hvm_pagetable_dying_t;
-DEFINE_GUEST_HANDLE_STRUCT(xen_hvm_pagetable_dying_t);
+DEFINE_GUEST_HANDLE_STRUCT(xen_hvm_pagetable_dying);
 
 enum hvmmem_type_t {
 	HVMMEM_ram_rw,             /* Normal read/write guest RAM */

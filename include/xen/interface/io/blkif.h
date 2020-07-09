@@ -1,4 +1,5 @@
-/******************************************************************************
+/* SPDX-License-Identifier: GPL-2.0
+ *
  * blkif.h
  *
  * Unified block-device I/O interface for Xen guest OSes.
@@ -653,8 +654,6 @@ struct blkif_request {
 	struct blkif_request_segment seg[BLKIF_MAX_SEGMENTS_PER_REQUEST];
 };
 
-typedef struct blkif_request blkif_request_t;
-
 /*
  * Cast to this structure when blkif_request.operation == BLKIF_OP_DISCARD
  * sizeof(struct blkif_request_discard) <= sizeof(struct blkif_request)
@@ -669,8 +668,6 @@ struct blkif_request_discard {
 	u64       nr_sectors;   /* number of contiguous sectors to discard*/
 };
 
-typedef struct blkif_request_discard blkif_request_discard_t;
-
 struct blkif_request_indirect {
 	u8        operation;    /* BLKIF_OP_INDIRECT                    */
 	u8        indirect_op;  /* BLKIF_OP_{READ/WRITE}                */
@@ -684,15 +681,11 @@ struct blkif_request_indirect {
 #endif
 };
 
-typedef struct blkif_request_indirect blkif_request_indirect_t;
-
 struct blkif_response {
 	u64        id;              /* copied from request */
 	u8         operation;       /* copied from request */
 	s16         status;          /* BLKIF_RSP_???       */
 };
-
-typedef struct blkif_response blkif_response_t;
 
 /*
  * STATUS RETURN CODES.

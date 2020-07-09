@@ -15,7 +15,7 @@
 #define uint64_aligned_t u64 __attribute__((aligned(8)))
 
 #define __DEFINE_GUEST_HANDLE(name, type) \
-	typedef struct { union { type *p; uint64_aligned_t q; }; }  \
+	typedef struct { union { type * p; uint64_aligned_t q; }; }  \
 		__guest_handle_ ## name
 
 #define DEFINE_GUEST_HANDLE_STRUCT(name) \
